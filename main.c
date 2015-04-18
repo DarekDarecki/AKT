@@ -54,6 +54,7 @@ while ((c = getopt (argc, argv, "f:p:w:a:g:o:s")) != -1)
 
 	}
 */
+    FILE *in = fopen("dwa.txt", "w");
     int i,nwords = MAXGEN;
     char *prefix[NPREF];
     for (i = 0; i < NPREF; i++) /* ustawiamy znak "\n" jako pierwszy prfiks */
@@ -63,7 +64,7 @@ while ((c = getopt (argc, argv, "f:p:w:a:g:o:s")) != -1)
     build(prefix, fopen("raz.txt", "r"));
     add(prefix, NONWORD);
     generate(nwords);
-    drukuj(nwords);
+    ngrams(in);
     printf("\n");
     return 0;
 }

@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "markov.h"
-#define N 100
+
 char NONWORD[] = "\n"; /* symbol, ktory na pewno nie jest slowem*/
-int tabh[NHASH];
-int xx = 0;
+int tabh[NHASH]; /*tablica przechowujaca wartosci "haszu"*/
+int xx = 0; /*licznik*/
+
 /* funkcja haszujaca - oblicza indeks tablicy stanow */
 unsigned int hash(char *s[])
 {
@@ -91,7 +92,6 @@ void build(char *prefix[NPREF], FILE *f)
 /* generate: generuje tekst wyjsciowy */
 void generate(int nwords)
 {
-    srand(time(NULL));
     State *sp;
     Suffix *suf;
     char *prefix[NPREF], *w;
@@ -117,29 +117,55 @@ void generate(int nwords)
         prefix[NPREF-1] = w;
     }
 }
-
-void rmdup(int *array, int length)
-{
-    int *current , *end = array + length - 1;
-
-    for ( current = array + 1; array < end; array++, current = array + 1 )
-    {
-        while ( current <= end )
-        {
-            if ( *current == *array )
-            {
-                *current = *end--;
-            }
-            else
-            {
-                current++;
-            }
-        }
-    }
+/*elimination: eliminuje powtarzajace sie elementy w tablicy*/
+int elimination(int *array, int size){
+int i,j,k;
+int *p = array;
+  for(i=0;i<size;i++){
+    for(j=0;j<size;j++){
+         if(i==j){
+             continue;
+         }
+         else if(*(p+i)==*(p+j)){
+             k=j;
+             size--;
+             while(k < size){
+                 *(p+k)=*(p+k+1);
+                 k++;
+              }
+              j=0;
+          }
+      }
+  }
+return size;
 }
 
-void drukuj(){
-    int i,h,k;
+int find(int *numbers, int n)
+{
+    int qMax = 0;
+    int i,j,temp, compare, max;
+    for (i=0;i<n;i++)
+    {
+        temp = 0;
+        compare = numbers[i];
+        for (j=0;j<n;j++)
+        {
+            if (numbers[j] == compare)
+            {
+                temp++;
+            }
+        }
+        if (temp > qMax)
+        {
+            max = compare;
+            qMax = temp;
+        }
+    }
+    return max;
+}
+/*funkcja generujaca plik posredni z prefiksami i ich sufiksami*/
+void ngrams(FILE *out){
+    int i,h,k,j,n,x;
     State *sp;
     Suffix *suf;
     char *prefix[NPREF],*w;
@@ -147,58 +173,42 @@ void drukuj(){
     {
         prefix[i] = NONWORD;
     }
-    rmdup(tabh, xx);
-    for (i = 0; i < xx; i++){ 
-    k=tabh[i];
-    for (sp = statetab[k]; sp != NULL; sp = sp->next){
-        printf("\"%s ", sp->pref[0]);
-        printf("%s\":\n", sp->pref[1]);
+    for (i = 0; i < xx; i++)
+        printf("%d ", tabh[i]); 
+    x = find(tabh, xx);
+    printf("\n--%d--\n",x); 
+   
+    for (sp = statetab[x]; sp != NULL; sp = sp->next){
+        printf("\"");
+        for (j = 0; j < NPREF; j++)
+            printf("%s ", sp->pref[j]);
+        printf("\":\n");
         for (suf = sp->suf; suf != NULL; suf = suf->next)
         {
                 w = suf->word;
                 printf("\t%s\n", w);
         }  
     }
-    }
-}
-/* 
 
-void drukuj(int nwords){
-    State *sp;
-    Suffix *suf;
-    char *prefix[NPREF],*w;
-    int i,j = 0,h, k = 0,tab[NHASH];
-    
-    for (i = 0; i < xx; i++)
-        printf("%d  ", tabh[i]); 
 
-    for (i = 0; i < NPREF; i++) 
-    {
-        prefix[i] = NONWORD;
-    }
-    for (i = 0; i< nwords; i++){
-        h = hash(prefix);
-        tab[k] = h;
-        for (j = 0; j < k; j++){
-            if(tab[j] == h){
-                memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
-                prefix[NPREF-1] = w;
-            }
-        }
-        sp = lookup(prefix, 0);
-        k++;
-        printf("%d\n", h);
-        printf("%s ", sp->pref[0]);
-        printf("%s:\n", sp->pref[1]);
+ 
+    n = elimination(tabh, xx); /*eliminujemy powtarzajace sie wartosci*/
+    printf("\n\n");
+    for (i = 0; i < n; i++)
+        printf("%d ", tabh[i]); 
+    for (i = NPREF; i < n; i++){ 
+    k = tabh[i];
+    for (sp = statetab[k]; sp != NULL; sp = sp->next){
+        fprintf(out,"\"");
+        for (j = 0; j < NPREF; j++)
+            fprintf(out, "%s ", sp->pref[j]);
+        fprintf(out, "\":\n");
         for (suf = sp->suf; suf != NULL; suf = suf->next)
         {
                 w = suf->word;
-                printf("%s\n", w);
-        }
-        if (strcmp(w, NONWORD) == 0) break;
-        //printf("%s: ", w);
-        memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
-        prefix[NPREF-1] = w;
-    } 
+                fprintf(out, "\t%s\n", w);
+        }  
+    }
+    }
 }
-*/
+
