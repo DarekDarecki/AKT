@@ -63,8 +63,9 @@ while ((c = getopt (argc, argv, "f:p:w:a:g:o:s")) != -1)
     build(prefix, fopen("raz.txt", "r"));
     add(prefix, NONWORD);
     generate(nwords);
-    //drukuj();
+    drukuj(nwords);
     printf("\n");
     return 0;
 }
+
 

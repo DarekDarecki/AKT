@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "markov.h"
-
+#define N 100
 char NONWORD[] = "\n"; /* symbol, ktory na pewno nie jest slowem*/
+int tabh[NHASH];
+int xx = 0;
 /* funkcja haszujaca - oblicza indeks tablicy stanow */
 unsigned int hash(char *s[])
 {
@@ -16,6 +18,8 @@ unsigned int hash(char *s[])
             h = 31 * h + *p;
         }
     }
+    tabh[xx] = h % NHASH;
+    xx++;
     return h % NHASH;
 }
 /* lookup: wyszukuje prefiks, jesli potrzeba tworzy go  */
@@ -29,7 +33,6 @@ State* lookup(char *prefix[], int create)
         {
             if (strcmp(prefix[i], sp->pref[i]) != 0)
             {
- //               printf("%s\n", sp->pref[i]);
                 break;
             }
         }
@@ -80,8 +83,7 @@ void add(char *prefix[NPREF], char *suffix)
 /* build: wczytuje plik, tworzy tablice prefiksow */
 void build(char *prefix[NPREF], FILE *f)
 {
-    char buf[100];
-    /* zakladamy ze slowo bedzie krotsze niz 100 znakow */
+    char buf[100]; /* zakladamy ze slowo bedzie krotsze niz 100 znakow */
     while (fscanf(f, "%s", buf) == 1) {
         add(prefix, strdup(buf));
     }
@@ -116,13 +118,87 @@ void generate(int nwords)
     }
 }
 
+void rmdup(int *array, int length)
+{
+    int *current , *end = array + length - 1;
+
+    for ( current = array + 1; array < end; array++, current = array + 1 )
+    {
+        while ( current <= end )
+        {
+            if ( *current == *array )
+            {
+                *current = *end--;
+            }
+            else
+            {
+                current++;
+            }
+        }
+    }
+}
+
 void drukuj(){
-    int i, j;
+    int i,h,k;
     State *sp;
-    for (j = 0; j < NHASH; j++){
-        sp = statetab[j];
-        for (i = 0; i < NPREF; i++)
-            printf("%s\n", sp->pref[i]);
-            //printf("%s\n", sp->)
+    Suffix *suf;
+    char *prefix[NPREF],*w;
+    for (i = 0; i < NPREF; i++) 
+    {
+        prefix[i] = NONWORD;
+    }
+    rmdup(tabh, xx);
+    for (i = 0; i < xx; i++){ 
+    k=tabh[i];
+    for (sp = statetab[k]; sp != NULL; sp = sp->next){
+        printf("\"%s ", sp->pref[0]);
+        printf("%s\":\n", sp->pref[1]);
+        for (suf = sp->suf; suf != NULL; suf = suf->next)
+        {
+                w = suf->word;
+                printf("\t%s\n", w);
+        }  
+    }
+    }
 }
+/* 
+
+void drukuj(int nwords){
+    State *sp;
+    Suffix *suf;
+    char *prefix[NPREF],*w;
+    int i,j = 0,h, k = 0,tab[NHASH];
+    
+    for (i = 0; i < xx; i++)
+        printf("%d  ", tabh[i]); 
+
+    for (i = 0; i < NPREF; i++) 
+    {
+        prefix[i] = NONWORD;
+    }
+    for (i = 0; i< nwords; i++){
+        h = hash(prefix);
+        tab[k] = h;
+        for (j = 0; j < k; j++){
+            if(tab[j] == h){
+                memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
+                prefix[NPREF-1] = w;
+            }
+        }
+        sp = lookup(prefix, 0);
+        k++;
+        printf("%d\n", h);
+        printf("%s ", sp->pref[0]);
+        printf("%s:\n", sp->pref[1]);
+        for (suf = sp->suf; suf != NULL; suf = suf->next)
+        {
+                w = suf->word;
+                printf("%s\n", w);
+        }
+        if (strcmp(w, NONWORD) == 0) break;
+        //printf("%s: ", w);
+        memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
+        prefix[NPREF-1] = w;
+    } 
 }
+*/
