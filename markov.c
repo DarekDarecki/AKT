@@ -5,7 +5,8 @@
 
 char NONWORD[] = "\n"; /* symbol, ktory na pewno nie jest slowem*/
 int tabh[NHASH]; /*tablica przechowujaca wartosci "haszu"*/
-int xx = 0; /*licznik*/
+int words = 0, xx = 0; /*licznik*/
+Suffix *wyrazy[100]; /* tablica haszujaca do statystyk*/
 
 /* funkcja haszujaca - oblicza indeks tablicy stanow */
 unsigned int hash(char *s[])
@@ -87,19 +88,34 @@ void build(char *prefix[NPREF], FILE *f)
     char buf[100]; /* zakladamy ze slowo bedzie krotsze niz 100 znakow */
     while (fscanf(f, "%s", buf) == 1) {
         add(prefix, strdup(buf));
+        words++;
     }
 }
-/* generate: generuje tekst wyjsciowy */
-void generate(int nwords)
+/*hash2: druga funkcja haszujaca*/
+unsigned int hash2(char *s)
 {
+    unsigned int h;
+    unsigned char *p;
+    int i;
+    h = 0;
+    for (p = (unsigned char *) s; *p != '\0'; p++)
+            h = 31 * h + *p;
+       
+    return h % NHASH;
+}
+
+/* generate: generuje tekst wyjsciowy */
+void generate(int nwords, int staty, FILE *st, FILE *out)
+{  
     State *sp;
-    Suffix *suf;
+    Suffix *suf, *lol;
     char *prefix[NPREF], *w;
-    int i, nmatch;
+    int i, nmatch,z,tabs[nwords],x,h, b = 0;
     for (i = 0; i < NPREF; i++) /* ustawiamy pierwsze slowo jako symbol "\n" */
     {
         prefix[i] = NONWORD;
     }
+    if (staty){
     for (i = 0; i< nwords; i++)
     {
         sp = lookup(prefix, 0);
@@ -112,9 +128,38 @@ void generate(int nwords)
             }
         }
         if (strcmp(w, NONWORD) == 0) break;
-        printf("%s ", w);
+        lol = (Suffix *) malloc(sizeof(Suffix));
+        h = hash2(w);
+        lol->word = w;
+        lol->next = wyrazy[h];
+        wyrazy[h] = lol;
+        fprintf(out,"%s ", w);
+        b++;
+        tabs[i] = h;
         memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
         prefix[NPREF-1] = w;
+    }
+    x = find(tabs, b);
+    lol = wyrazy[x];
+    fprintf(st, "Ilosc slow w bazowym tekscie = %d.\n", words);
+    fprintf(st, "Ilosc slow w wygenerowanym tekscie = %d.\n", b);
+    fprintf(st,"Najczestszym slowem w wygenerowanym tekscie jest \"%s\".\n", lol->word);
+    } else {
+        for (i = 0; i< nwords; i++){
+        sp = lookup(prefix, 0);
+        nmatch = 0;
+        for (suf = sp->suf; suf != NULL; suf = suf->next)
+        {
+            if (rand() % ++nmatch == 0) /* prob = 1/nmatch */
+            {
+                w = suf->word;
+            }
+        }
+        if (strcmp(w, NONWORD) == 0) break;
+        fprintf(out,"%s ", w);
+        memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
+        prefix[NPREF-1] = w;
+        }
     }
 }
 /*elimination: eliminuje powtarzajace sie elementy w tablicy*/
@@ -139,7 +184,7 @@ int *p = array;
   }
 return size;
 }
-
+/*find: wyszukuje najczesciej powtarzajacy sie element (w domysle ngram)*/
 int find(int *numbers, int n)
 {
     int qMax = 0;
@@ -164,51 +209,40 @@ int find(int *numbers, int n)
     return max;
 }
 /*funkcja generujaca plik posredni z prefiksami i ich sufiksami*/
-void ngrams(FILE *out){
+void ngrams(FILE *st, FILE *po){
     int i,h,k,j,n,x;
     State *sp;
     Suffix *suf;
     char *prefix[NPREF],*w;
-    for (i = 0; i < NPREF; i++) 
+    for (i = 0; i < NPREF; i++)
     {
         prefix[i] = NONWORD;
     }
-    for (i = 0; i < xx; i++)
-        printf("%d ", tabh[i]); 
     x = find(tabh, xx);
-    printf("\n--%d--\n",x); 
-   
     for (sp = statetab[x]; sp != NULL; sp = sp->next){
-        printf("\"");
+        fprintf(st,"Najczestszy %d-gram to = \"", NPREF);
         for (j = 0; j < NPREF; j++)
-            printf("%s ", sp->pref[j]);
-        printf("\":\n");
+            fprintf(st,"%s ", sp->pref[j]);
+        fprintf(st,"\". Jego sufiksy to:\n");
         for (suf = sp->suf; suf != NULL; suf = suf->next)
         {
                 w = suf->word;
-                printf("\t%s\n", w);
-        }  
+                fprintf(st,"\t- %s\n", w);
+        }
     }
-
-
- 
     n = elimination(tabh, xx); /*eliminujemy powtarzajace sie wartosci*/
-    printf("\n\n");
-    for (i = 0; i < n; i++)
-        printf("%d ", tabh[i]); 
-    for (i = NPREF; i < n; i++){ 
+    for (i = NPREF; i < n; i++){
     k = tabh[i];
     for (sp = statetab[k]; sp != NULL; sp = sp->next){
-        fprintf(out,"\"");
+        fprintf(po,"\"");
         for (j = 0; j < NPREF; j++)
-            fprintf(out, "%s ", sp->pref[j]);
-        fprintf(out, "\":\n");
+            fprintf(po, "%s ", sp->pref[j]);
+        fprintf(po, "\":\n");
         for (suf = sp->suf; suf != NULL; suf = suf->next)
         {
                 w = suf->word;
-                fprintf(out, "\t%s\n", w);
-        }  
+                fprintf(po, "\t%s\n", w);
+        }
     }
     }
 }
-

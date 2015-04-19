@@ -5,7 +5,7 @@
 #define MAXPLIKI 10
 
 const int NPREF = 2;
-const int MAXGEN = 90;
+const int MAXGEN = 60;
 int main (int argc, char **argv){
 
 char NONWORD[] = "\n"; /* znak ktory na pewno nie bedzie slowem */
@@ -54,7 +54,9 @@ while ((c = getopt (argc, argv, "f:p:w:a:g:o:s")) != -1)
 
 	}
 */
-    FILE *in = fopen("dwa.txt", "w");
+    FILE *st = fopen("staty.txt", "w");
+    FILE *out = fopen("text.txt", "w");
+    FILE *po = fopen("posr.txt", "w");
     int i,nwords = MAXGEN;
     char *prefix[NPREF];
     for (i = 0; i < NPREF; i++) /* ustawiamy znak "\n" jako pierwszy prfiks */
@@ -63,8 +65,8 @@ while ((c = getopt (argc, argv, "f:p:w:a:g:o:s")) != -1)
     }
     build(prefix, fopen("raz.txt", "r"));
     add(prefix, NONWORD);
-    generate(nwords);
-    ngrams(in);
+    generate(nwords, 0, st, out);
+    ngrams(st, po);
     printf("\n");
     return 0;
 }
