@@ -1,8 +1,8 @@
 #ifndef __MARKOV_H
 #define __MARKOV_H
-#define NHASH 4093 /*rozmiar tablicy haszujacej */
+#define NHASH 99999 /*rozmiar tablicy haszujacej */
 #define N 100 /* zakladamy, ze ngramy nie beda wieksze niz 100*/
-extern const int NPREF;
+extern int NPREF;
 extern const int MAXGEN;
 
 typedef struct State State;
