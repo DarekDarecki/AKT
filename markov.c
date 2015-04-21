@@ -47,7 +47,8 @@ State* lookup(char *prefix[], int create)
         sp = (State *) malloc(sizeof(State));
         if (sp == NULL)
         {
-            exit(2);
+            fprintf (stderr, "Nie udalo sie przydzielic pamieci. Przykro mi [*]\n");
+            exit (EXIT_FAILURE);
         }
         for (i = 0; i < NPREF; i++)
         {
@@ -66,7 +67,8 @@ void add_suffix(State *sp, char *suffix)
     suf = (Suffix *) malloc(sizeof(Suffix));
     if (suf == NULL)
     {
-        exit(2);
+         fprintf (stderr, "Nie udalo sie przydzielic pamieci. Przykro mi [*]\n");
+            exit (EXIT_FAILURE);
     }
     suf->word = suffix;
     suf->next = sp->suf;
@@ -156,7 +158,7 @@ void generate(int nwords, int staty, FILE *st, FILE *out)
             memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
             prefix[NPREF-1] = w;
         }
-    } 
+    }
 }
 /*elimination: eliminuje powtarzajace sie elementy w tablicy*/
 int elimination(int *array, int size){
